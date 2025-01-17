@@ -69,17 +69,6 @@ system_summary() {
     echo "Disk Usage:"
     df -h
 }
-random_password() { tr -dc A-Za-z0-9 </dev/urandom | head -c 16 && echo; }
-network_speed() { ethtool $(ip route | grep '^default' | awk '{print $5}') | grep "Speed"; }
-disk_health() { sudo smartctl -H /dev/sda | grep "SMART overall-health"; }
-list_cronjobs() { crontab -l || echo "No cron jobs found."; }
-add_cronjob() { (crontab -l 2>/dev/null; echo "$2 $3") | crontab - && echo "Cron job added."; }
-temp_monitor() { vcgencmd measure_temp; }
-battery_status() { upower -i $(upower -e | grep BAT) | grep -E "state|percentage"; }
-wifi_info() { iwconfig wlan0; }
-open_ports() { sudo lsof -i -P -n | grep LISTEN; }
-connected_devices() { arp -a; }
-remote_shutdown() { ssh "$1" "sudo shutdown now" && echo "Shutdown signal sent to $1."; }
 
 # Command Handler
 case "$1" in
@@ -129,31 +118,44 @@ case "$1" in
     wifi) wifi_scan;;
     sysinfo) system_summary;;
     update) update_finner;;
-    randpass) random_password;;
-    netspeed) network_speed;;
-    diskhealth) disk_health;;
-    cronlist) list_cronjobs;;
-    addcron) add_cronjob "$2" "$3";;
-    temp) temp_monitor;;
-    battery) battery_status;;
-    wifiinfo) wifi_info;;
-    ports) open_ports;;
-    devices) connected_devices;;
-    rshutdown) remote_shutdown "$2";;
     help)
         echo "Finner Commands:"
-        echo "  randpass            - Generate a random password"
-        echo "  netspeed            - Check network speed"
-        echo "  diskhealth          - Show disk health"
-        echo "  cronlist            - List all cron jobs"
-        echo "  addcron <time> <cmd> - Add a new cron job"
-        echo "  temp                - Monitor Raspberry Pi temperature"
-        echo "  battery             - Show battery status"
-        echo "  wifiinfo            - Display detailed Wi-Fi info"
-        echo "  ports               - Show all open ports"
-        echo "  devices             - Show connected network devices"
-        echo "  rshutdown <ip>      - Remotely shut down a device"
-        echo "Use 'Finner help' to see all commands."
+        echo "  f <file>              - Edit or create a file"
+        echo "  c <command>           - Run a command with sudo"
+        echo "  clean                 - Clean system files"
+        echo "  health                - Show system health"
+        echo "  big <size>            - Find large files"
+        echo "  soft                  - List installed software"
+        echo "  perms <file>          - View file permissions"
+        echo "  del <file>            - Delete a file"
+        echo "  disk                  - Show disk usage"
+        echo "  ps                    - Show running processes"
+        echo "  uptime                - Show system uptime"
+        echo "  cpu                   - Display CPU details"
+        echo "  mem                   - Display memory usage"
+        echo "  quicknote <text>      - Save a quick note"
+        echo "  notes                 - View all saved notes"
+        echo "  reboot                - Reboot the system"
+        echo "  mkdir <folder>        - Create a new folder"
+        echo "  rmdir <folder>        - Delete an empty folder"
+        echo "  time                  - Show current date and time"
+        echo "  ip                    - Show system IP address"
+        echo "  ping <url>            - Ping a website or server"
+        echo "  backup <file>         - Backup a file"
+        echo "  topcpu                - Show top 10 CPU-consuming processes"
+        echo "  topmem                - Show top 10 memory-consuming processes"
+        echo "  kernel                - Show Linux kernel version"
+        echo "  mounts                - Show mounted drives"
+        echo "  unmount <drive>       - Unmount a drive"
+        echo "  kill <pid>            - Kill a process"
+        echo "  hostname <name>       - Change system hostname"
+        echo "  lastboot              - Show last boot time"
+        echo "  adduser <username>    - Add a new user"
+        echo "  deluser <username>    - Delete an existing user"
+        echo "  netstat               - Show network connections"
+        echo "  wifi                  - Show available Wi-Fi networks"
+        echo "  sysinfo               - Display system summary"
+        echo "  update                - Update Finner to the latest version"
         ;;
     *)
         echo "Invalid command. Use 'Finner help' to see all commands."
