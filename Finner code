@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # URL to fetch updates
-SCRIPT_URL="https://raw.githubusercontent.com/Extreme6914144/Finner/main/Finner"
+SCRIPT_URL="https://github.com/Extreme6914144/Finner/blob/main/Finner%20code"
 
 # Functions for commands
 file_edit() { nano "$1"; }
