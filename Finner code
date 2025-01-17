@@ -1,0 +1,120 @@
+#!/bin/bash
+
+# URL where the latest version of the script is hosted
+SCRIPT_URL="https://example.com/finner-latest.sh"
+
+# Functions for commands
+file_edit() { nano "$1"; }
+run_command() { sudo "$@"; }
+cleanup_spacer() { sudo apt-get clean && sudo rm -rf /tmp/* && echo "Cleaned up!"; }
+health_check() { echo "CPU Load:"; uptime; echo "Memory Usage:"; free -h; echo "Disk Usage:"; df -h; }
+find_large_files() { find / -type f -size +"$1" 2>/dev/null; }
+list_installed_software() { dpkg --get-selections | grep -v deinstall; }
+view_permissions() { ls -l "$1"; }
+delete_file() { rm -i "$1"; echo "File deleted!"; }
+check_disk_usage() { df -h; }
+process_list() { ps aux; }
+uptime_check() { uptime; }
+cpu_info() { lscpu | grep "Model name"; }
+memory_info() { free -h; }
+quick_note() { echo "$1" >> notes.txt; echo "Note saved: $1"; }
+view_notes() { cat notes.txt; }
+system_reboot() { sudo reboot; }
+create_folder() { mkdir -p "$1" && echo "Folder '$1' created."; }
+delete_folder() { rmdir "$1" && echo "Folder '$1' deleted."; }
+show_time() { date; }
+show_ip() { hostname -I | awk '{print $1}'; }
+ping_test() { ping -c 4 "$1"; }
+backup_file() { cp "$1" "$1.bak" && echo "Backup created: $1.bak"; }
+top_cpu_processes() { ps -eo pid,comm,%cpu --sort=-%cpu | head -n 10; }
+top_mem_processes() { ps -eo pid,comm,%mem --sort=-%mem | head -n 10; }
+kernel_version() { uname -r; }
+generate_password() { tr -dc 'A-Za-z0-9!@#$%^&*()_+~' </dev/urandom | head -c 16; echo; }
+file_size() { du -h "$1"; }
+search_file() { find / -name "$1" 2>/dev/null; }
+compress_folder() { tar -czvf "$1.tar.gz" "$1" && echo "Compressed folder: $1.tar.gz"; }
+decompress_folder() { tar -xzvf "$1" && echo "Decompressed folder: $1"; }
+services_status() { systemctl list-units --type=service; }
+wifi_status() { iwconfig 2>/dev/null | grep -i "ssid\|signal"; }
+open_ports() { sudo lsof -i -P -n | grep LISTEN; }
+dns_lookup() { dig "$1" +short; }
+battery_status() { upower -i $(upower -e | grep BAT) | grep --color=never -E "state|to full|percentage"; }
+kill_process() { sudo kill "$1" && echo "Killed process with PID: $1"; }
+usb_devices() { lsusb; }
+edit_bashrc() { nano ~/.bashrc; }
+process_count() { ps aux | wc -l; }
+clear_logs() { sudo rm -rf /var/log/* && echo "Logs cleared!"; }
+
+# Update function
+update_finner() {
+    echo "Updating Finner to the latest version..."
+    wget -q -O /usr/local/bin/Finner "$SCRIPT_URL" && chmod +x /usr/local/bin/Finner
+    if [ $? -eq 0 ]; then
+        echo "Finner successfully updated to the latest version!"
+    else
+        echo "Failed to update Finner. Please check your internet connection or the script URL."
+    fi
+}
+
+# Help function
+help_menu() {
+    echo "Finner Command Help:"
+    echo "  f <file>              - Edit or create a file"
+    echo "  c <command>           - Run a command with sudo"
+    echo "  clean                 - Clean system files"
+    echo "  health                - Show system health (CPU, memory, disk)"
+    echo "  big <size>            - Find large files (e.g., '1M' for files >1MB)"
+    echo "  soft                  - List installed software"
+    echo "  perms <file>          - View file permissions"
+    echo "  del <file>            - Delete a file (confirmation required)"
+    echo "  disk                  - Show disk usage"
+    echo "  ps                    - Show running processes"
+    echo "  uptime                - Show system uptime"
+    echo "  cpu                   - Display CPU details"
+    echo "  mem                   - Display memory usage"
+    echo "  quicknote <text>      - Save a quick note"
+    echo "  notes                 - View all saved notes"
+    echo "  reboot                - Reboot the system"
+    echo "  mkdir <folder>        - Create a new folder"
+    echo "  rmdir <folder>        - Delete an empty folder"
+    echo "  time                  - Show current date and time"
+    echo "  ip                    - Show system IP address"
+    echo "  ping <url>            - Ping a website or server"
+    echo "  backup <file>         - Backup a file"
+    echo "  topcpu                - Show top 10 CPU-consuming processes"
+    echo "  topmem                - Show top 10 memory-consuming processes"
+    echo "  kernel                - Show Linux kernel version"
+    echo "  update                - Update Finner to the latest version"
+}
+
+# Command Handler
+case "$1" in
+    f) file_edit "$2";;
+    c) run_command "${@:2}";;
+    clean) cleanup_spacer;;
+    health) health_check;;
+    big) find_large_files "$2";;
+    soft) list_installed_software;;
+    perms) view_permissions "$2";;
+    del) delete_file "$2";;
+    disk) check_disk_usage;;
+    ps) process_list;;
+    uptime) uptime_check;;
+    cpu) cpu_info;;
+    mem) memory_info;;
+    quicknote) quick_note "$2";;
+    notes) view_notes;;
+    reboot) system_reboot;;
+    mkdir) create_folder "$2";;
+    rmdir) delete_folder "$2";;
+    time) show_time;;
+    ip) show_ip;;
+    ping) ping_test "$2";;
+    backup) backup_file "$2";;
+    topcpu) top_cpu_processes;;
+    topmem) top_mem_processes;;
+    kernel) kernel_version;;
+    update) update_finner;;
+    help) help_menu;;
+    *) echo "Invalid command. Use 'Finner help' to see all commands.";;
+esac
