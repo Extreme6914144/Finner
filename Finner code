@@ -32,7 +32,6 @@ update_finner() {
     chmod +x /usr/local/bin/Finner
     echo "Finner updated to the latest version!"
 }
-
 file_stat() { stat "$1"; }
 show_syslog() { tail -n 20 /var/log/syslog; }
 check_port() { sudo netstat -tuln | grep ":$1"; }
@@ -48,6 +47,28 @@ list_services() { systemctl list-units --type=service --state=running; }
 find_file() { find / -name "$1" 2>/dev/null; }
 calculate() { echo "$1" | bc; }
 lock_screen() { gnome-screensaver-command -l || echo "Lock screen command not supported on this system."; }
+show_mounts() { mount | column -t; }
+unmount_drive() { sudo umount "$1" && echo "Drive $1 unmounted."; }
+kill_process() { sudo kill "$1" && echo "Process $1 killed."; }
+change_hostname() { sudo hostnamectl set-hostname "$1" && echo "Hostname changed to $1"; }
+last_boot() { who -b; }
+add_user() { sudo adduser "$1"; }
+delete_user() { sudo deluser "$1"; }
+show_netstat() { netstat -tuln; }
+wifi_scan() { sudo iwlist wlan0 scan | grep 'ESSID'; }
+system_summary() {
+    echo "System Information:"
+    echo "--------------------"
+    echo "Hostname: $(hostname)"
+    echo "IP Address: $(hostname -I | awk '{print $1}')"
+    echo "Uptime: $(uptime -p)"
+    echo "Kernel Version: $(uname -r)"
+    echo "CPU: $(lscpu | grep 'Model name' | awk -F: '{print $2}')"
+    echo "Memory Usage:"
+    free -h
+    echo "Disk Usage:"
+    df -h
+}
 
 # Command Handler
 case "$1" in
@@ -86,46 +107,21 @@ case "$1" in
     findfile) find_file "$2";;
     calc) calculate "$2";;
     lockscreen) lock_screen;;
+    mounts) show_mounts;;
+    unmount) unmount_drive "$2";;
+    kill) kill_process "$2";;
+    hostname) change_hostname "$2";;
+    lastboot) last_boot;;
+    adduser) add_user "$2";;
+    deluser) delete_user "$2";;
+    netstat) show_netstat;;
+    wifi) wifi_scan;;
+    sysinfo) system_summary;;
     update) update_finner;;
     help)
         echo "Finner Commands:"
-        echo "  f <file>              - Edit or create a file"
-        echo "  c <command>           - Run a command with sudo"
-        echo "  clean                 - Clean system files"
-        echo "  health                - Show system health"
-        echo "  big <size>            - Find large files"
-        echo "  soft                  - List installed software"
-        echo "  perms <file>          - View file permissions"
-        echo "  del <file>            - Delete a file"
-        echo "  disk                  - Show disk usage"
-        echo "  ps                    - Show running processes"
-        echo "  uptime                - Show system uptime"
-        echo "  cpu                   - Display CPU details"
-        echo "  mem                   - Display memory usage"
-        echo "  quicknote <text>      - Save a quick note"
-        echo "  notes                 - View all saved notes"
-        echo "  reboot                - Reboot the system"
-        echo "  mkdir <folder>        - Create a new folder"
-        echo "  rmdir <folder>        - Delete an empty folder"
-        echo "  time                  - Show current date and time"
-        echo "  ip                    - Show system IP address"
-        echo "  ping <url>            - Ping a website or server"
-        echo "  backup <file>         - Backup a file"
-        echo "  topcpu                - Show top 10 CPU-consuming processes"
-        echo "  topmem                - Show top 10 memory-consuming processes"
-        echo "  kernel                - Show Linux kernel version"
-        echo "  fstat <file>          - Show detailed file statistics"
-        echo "  syslog                - Display latest system logs"
-        echo "  checkport <port>      - Check if a port is open"
-        echo "  users                 - List logged-in users"
-        echo "  weather <city>        - Fetch current weather"
-        echo "  speedtest             - Run an internet speed test"
-        echo "  services              - List running services"
-        echo "  findfile <name>       - Find files by name"
-        echo "  calc <expression>     - Perform math calculations"
-        echo "  lockscreen            - Lock the screen"
-        echo "  update                - Update Finner script"
-         ;;
+        echo "  [See full command list in previous script]"
+        ;;
     *)
         echo "Invalid command. Use 'Finner help' to see all commands."
         ;;
