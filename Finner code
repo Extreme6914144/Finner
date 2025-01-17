@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # URL where the latest version of the script is hosted
-SCRIPT_URL="https://example.com/finner-latest.sh"
+SCRIPT_URL="https://github.com/Extreme6914144/Finner/commit/8213655e918e49efc993ec3730a574470e396ef8"
 
 # Functions for commands
 file_edit() { nano "$1"; }
