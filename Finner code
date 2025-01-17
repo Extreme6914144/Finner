@@ -69,20 +69,45 @@ system_summary() {
     echo "Disk Usage:"
     df -h
 }
-chat_gpt() {
-    echo "What would you like to ask ChatGPT?"
-    read -r query
-    response=$(curl -s -X POST "https://api.openai.com/v1/engines/davinci-codex/completions" \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer YOUR_API_KEY" \
-        -d '{
-        "prompt": "'"$query"'",
-        "max_tokens": 150
-    }')
-    echo "Response: $response"
+
+# Function to interact with ChatGPT via OpenAI API
+chat_with_ai() {
+    echo "Starting AI chat. Type 'exit' to end the chat."
+
+    # Prompt user for their OpenAI API key (store it securely for repeated use)
+    if [[ -z "$OPENAI_API_KEY" ]]; then
+        echo -n "Enter your OpenAI API Key: "
+        read -r api_key
+        export OPENAI_API_KEY="$api_key"
+    fi
+
+    while true; do
+        echo -n "You: "
+        read -r user_input
+
+        # Exit condition
+        if [[ "$user_input" == "exit" ]]; then
+            echo "AI: Goodbye!"
+            break
+        fi
+
+        # Make API call to OpenAI
+        response=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -d '{
+                "model": "gpt-3.5-turbo",
+                "messages": [{"role": "user", "content": "'"$user_input"'"}],
+                "max_tokens": 150
+            }')
+
+        # Extract and display the AI's response using jq
+        ai_response=$(echo "$response" | jq -r '.choices[0].message.content')
+        echo "AI: $ai_response"
+    done
 }
 
-# Command Handler
+# Command handler
 case "$1" in
     f) file_edit "$2";;
     c) run_command "${@:2}";;
@@ -109,6 +134,7 @@ case "$1" in
     topcpu) top_cpu_processes;;
     topmem) top_mem_processes;;
     kernel) kernel_version;;
+    update) update_finner;;
     fstat) file_stat "$2";;
     syslog) show_syslog;;
     checkport) check_port "$2";;
@@ -129,13 +155,11 @@ case "$1" in
     netstat) show_netstat;;
     wifi) wifi_scan;;
     sysinfo) system_summary;;
-    update) update_finner;;
-    chatgpt) chat_gpt;;
+    ai) chat_with_ai;;
     help)
         echo "Finner Commands:"
-        echo "  f <file>              - Edit or create a file"
-        # (Keep adding the rest of the help text here)
-        echo "  chatgpt               - Ask ChatGPT a question"
+        echo "  ai                    - Chat with OpenAI's GPT-based assistant"
+        # Add other help entries here...
         ;;
     *)
         echo "Invalid command. Use 'Finner help' to see all commands."
