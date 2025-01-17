@@ -69,45 +69,19 @@ system_summary() {
     echo "Disk Usage:"
     df -h
 }
+random_password() { tr -dc A-Za-z0-9 </dev/urandom | head -c 16 && echo; }
+network_speed() { ethtool $(ip route | grep '^default' | awk '{print $5}') | grep "Speed"; }
+disk_health() { sudo smartctl -H /dev/sda | grep "SMART overall-health"; }
+list_cronjobs() { crontab -l || echo "No cron jobs found."; }
+add_cronjob() { (crontab -l 2>/dev/null; echo "$2 $3") | crontab - && echo "Cron job added."; }
+temp_monitor() { vcgencmd measure_temp; }
+battery_status() { upower -i $(upower -e | grep BAT) | grep -E "state|percentage"; }
+wifi_info() { iwconfig wlan0; }
+open_ports() { sudo lsof -i -P -n | grep LISTEN; }
+connected_devices() { arp -a; }
+remote_shutdown() { ssh "$1" "sudo shutdown now" && echo "Shutdown signal sent to $1."; }
 
-# Function to interact with ChatGPT via OpenAI API
-chat_with_ai() {
-    echo "Starting AI chat. Type 'exit' to end the chat."
-
-    # Prompt user for their OpenAI API key (store it securely for repeated use)
-    if [[ -z "$OPENAI_API_KEY" ]]; then
-        echo -n "Enter your OpenAI API Key: "
-        read -r api_key
-        export OPENAI_API_KEY="$api_key"
-    fi
-
-    while true; do
-        echo -n "You: "
-        read -r user_input
-
-        # Exit condition
-        if [[ "$user_input" == "exit" ]]; then
-            echo "AI: Goodbye!"
-            break
-        fi
-
-        # Make API call to OpenAI
-        response=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
-            -d '{
-                "model": "gpt-3.5-turbo",
-                "messages": [{"role": "user", "content": "'"$user_input"'"}],
-                "max_tokens": 150
-            }')
-
-        # Extract and display the AI's response using jq
-        ai_response=$(echo "$response" | jq -r '.choices[0].message.content')
-        echo "AI: $ai_response"
-    done
-}
-
-# Command handler
+# Command Handler
 case "$1" in
     f) file_edit "$2";;
     c) run_command "${@:2}";;
@@ -134,7 +108,6 @@ case "$1" in
     topcpu) top_cpu_processes;;
     topmem) top_mem_processes;;
     kernel) kernel_version;;
-    update) update_finner;;
     fstat) file_stat "$2";;
     syslog) show_syslog;;
     checkport) check_port "$2";;
@@ -155,11 +128,32 @@ case "$1" in
     netstat) show_netstat;;
     wifi) wifi_scan;;
     sysinfo) system_summary;;
-    ai) chat_with_ai;;
+    update) update_finner;;
+    randpass) random_password;;
+    netspeed) network_speed;;
+    diskhealth) disk_health;;
+    cronlist) list_cronjobs;;
+    addcron) add_cronjob "$2" "$3";;
+    temp) temp_monitor;;
+    battery) battery_status;;
+    wifiinfo) wifi_info;;
+    ports) open_ports;;
+    devices) connected_devices;;
+    rshutdown) remote_shutdown "$2";;
     help)
         echo "Finner Commands:"
-        echo "  ai                    - Chat with OpenAI's GPT-based assistant"
-        # Add other help entries here...
+        echo "  randpass            - Generate a random password"
+        echo "  netspeed            - Check network speed"
+        echo "  diskhealth          - Show disk health"
+        echo "  cronlist            - List all cron jobs"
+        echo "  addcron <time> <cmd> - Add a new cron job"
+        echo "  temp                - Monitor Raspberry Pi temperature"
+        echo "  battery             - Show battery status"
+        echo "  wifiinfo            - Display detailed Wi-Fi info"
+        echo "  ports               - Show all open ports"
+        echo "  devices             - Show connected network devices"
+        echo "  rshutdown <ip>      - Remotely shut down a device"
+        echo "Use 'Finner help' to see all commands."
         ;;
     *)
         echo "Invalid command. Use 'Finner help' to see all commands."
