@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# OpenAI API Key (replace with your API key)
-OPENAI_API_KEY="your_api_key_here"
-
 # Functions for commands
 file_edit() { nano "$1"; }
 run_command() { sudo "$@"; }
@@ -72,51 +69,17 @@ system_summary() {
     echo "Disk Usage:"
     df -h
 }
-
-# ChatGPT Functions
-chat_with_gpt() {
-    local prompt="$1"
-    local conversation_file="/tmp/finner_chat_conversation.json"
-
-    # Check if OpenAI API key is set
-    if [ -z "$OPENAI_API_KEY" ]; then
-        echo "Error: OpenAI API key not set. Please add your API key to the script."
-        return 1
-    fi
-
-    # Initialize the conversation file if it doesn't exist
-    if [ ! -f "$conversation_file" ]; then
-        echo '[{"role": "system", "content": "You are a helpful assistant."}]' > "$conversation_file"
-    fi
-
-    # Add the user's message to the conversation
-    jq '. += [{"role": "user", "content": "'"$prompt"'"}]' "$conversation_file" > /tmp/conversation.tmp && mv /tmp/conversation.tmp "$conversation_file"
-
-    # Send the conversation to OpenAI API
-    local response=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
+chat_gpt() {
+    echo "What would you like to ask ChatGPT?"
+    read -r query
+    response=$(curl -s -X POST "https://api.openai.com/v1/engines/davinci-codex/completions" \
         -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $OPENAI_API_KEY" \
+        -H "Authorization: Bearer YOUR_API_KEY" \
         -d '{
-            "model": "gpt-3.5-turbo",
-            "messages": '"$(cat "$conversation_file")"',
-            "max_tokens": 150
-        }')
-
-    # Extract and display the response
-    local reply=$(echo "$response" | jq -r '.choices[0].message.content' 2>/dev/null)
-
-    if [ -n "$reply" ]; then
-        echo "$reply"
-        # Add the assistant's reply to the conversation
-        jq '. += [{"role": "assistant", "content": "'"$reply"'"}]' "$conversation_file" > /tmp/conversation.tmp && mv /tmp/conversation.tmp "$conversation_file"
-    else
-        echo "Error: Could not retrieve a response. Make sure 'jq' is installed and your API key is correct."
-    fi
-}
-
-reset_chat() {
-    rm -f /tmp/finner_chat_conversation.json
-    echo "Chat conversation history reset!"
+        "prompt": "'"$query"'",
+        "max_tokens": 150
+    }')
+    echo "Response: $response"
 }
 
 # Command Handler
@@ -167,13 +130,12 @@ case "$1" in
     wifi) wifi_scan;;
     sysinfo) system_summary;;
     update) update_finner;;
-    chat) chat_with_gpt "${@:2}";;
-    resetchat) reset_chat;;
+    chatgpt) chat_gpt;;
     help)
         echo "Finner Commands:"
-        echo "  chat <message>       - Chat with OpenAI's ChatGPT"
-        echo "  resetchat            - Reset the chat conversation history"
-        echo "  (Other commands listed here...)"
+        echo "  f <file>              - Edit or create a file"
+        # (Keep adding the rest of the help text here)
+        echo "  chatgpt               - Ask ChatGPT a question"
         ;;
     *)
         echo "Invalid command. Use 'Finner help' to see all commands."
