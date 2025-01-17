@@ -125,7 +125,7 @@ case "$1" in
         echo "  calc <expression>     - Perform math calculations"
         echo "  lockscreen            - Lock the screen"
         echo "  update                - Update Finner script"
-        ;;
+         ;;
     *)
         echo "Invalid command. Use 'Finner help' to see all commands."
         ;;
