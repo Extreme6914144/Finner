@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# URL to fetch updates
-SCRIPT_URL="https://github.com/Extreme6914144/Finner/blob/main/Finner%20code"
-
 # Functions for commands
 file_edit() { nano "$1"; }
 run_command() { sudo "$@"; }
-cleanup_spacer() { sudo apt-get clean && sudo rm -rf /tmp/* && echo "System cleaned!"; }
+cleanup_spacer() { sudo apt-get clean && sudo rm -rf /tmp/* && echo "Cleaned up!"; }
 health_check() { echo "CPU Load:"; uptime; echo "Memory Usage:"; free -h; echo "Disk Usage:"; df -h; }
 find_large_files() { find / -type f -size +"$1" 2>/dev/null; }
 list_installed_software() { dpkg --get-selections | grep -v deinstall; }
@@ -29,17 +26,27 @@ backup_file() { cp "$1" "$1.bak" && echo "Backup created: $1.bak"; }
 top_cpu_processes() { ps -eo pid,comm,%cpu --sort=-%cpu | head -n 10; }
 top_mem_processes() { ps -eo pid,comm,%mem --sort=-%mem | head -n 10; }
 kernel_version() { uname -r; }
-update_script() {
+update_finner() {
     echo "Updating Finner..."
-    curl -o /usr/local/bin/Finner "$SCRIPT_URL"
+    curl -o /usr/local/bin/Finner https://raw.githubusercontent.com/Extreme6914144/Finner/main/Finner%20code
     chmod +x /usr/local/bin/Finner
     echo "Finner updated to the latest version!"
 }
-download_file() { wget -O "$2" "$1" && echo "File downloaded to $2"; }
-count_files() { find "$1" -type f | wc -l; echo "Files in $1 counted."; }
-weather_report() { curl "wttr.in/$1?format=3"; }
-generate_password() { tr -dc 'A-Za-z0-9!@#$%^&*()_+' < /dev/urandom | head -c "$1"; echo; }
-port_status() { sudo netstat -tuln | grep ":$1"; }
+file_stat() { stat "$1"; }
+show_syslog() { tail -n 20 /var/log/syslog; }
+check_port() { sudo netstat -tuln | grep ":$1"; }
+list_users() { who; }
+fetch_weather() {
+    city="$1"
+    curl -s "wttr.in/$city?format=3" || echo "Could not fetch weather. Check your internet."
+}
+run_speedtest() {
+    curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
+}
+list_services() { systemctl list-units --type=service --state=running; }
+find_file() { find / -name "$1" 2>/dev/null; }
+calculate() { echo "$1" | bc; }
+lock_screen() { gnome-screensaver-command -l || echo "Lock screen command not supported on this system."; }
 
 # Command Handler
 case "$1" in
@@ -68,12 +75,17 @@ case "$1" in
     topcpu) top_cpu_processes;;
     topmem) top_mem_processes;;
     kernel) kernel_version;;
-    update) update_script;;
-    dl) download_file "$2" "$3";;
-    count) count_files "$2";;
-    weather) weather_report "$2";;
-    genpass) generate_password "$2";;
-    port) port_status "$2";;
+    fstat) file_stat "$2";;
+    syslog) show_syslog;;
+    checkport) check_port "$2";;
+    users) list_users;;
+    weather) fetch_weather "$2";;
+    speedtest) run_speedtest;;
+    services) list_services;;
+    findfile) find_file "$2";;
+    calc) calculate "$2";;
+    lockscreen) lock_screen;;
+    update) update_finner;;
     help)
         echo "Finner Commands:"
         echo "  f <file>              - Edit or create a file"
@@ -101,14 +113,19 @@ case "$1" in
         echo "  topcpu                - Show top 10 CPU-consuming processes"
         echo "  topmem                - Show top 10 memory-consuming processes"
         echo "  kernel                - Show Linux kernel version"
-        echo "  update                - Update Finner to the latest version"
-        echo "  dl <url> <file>       - Download a file from a URL"
-        echo "  count <folder>        - Count files in a folder"
-        echo "  weather <city>        - Get weather for a city"
-        echo "  genpass <length>      - Generate a random password"
-        echo "  port <number>         - Check status of a specific port"
+        echo "  fstat <file>          - Show detailed file statistics"
+        echo "  syslog                - Display latest system logs"
+        echo "  checkport <port>      - Check if a port is open"
+        echo "  users                 - List logged-in users"
+        echo "  weather <city>        - Fetch current weather"
+        echo "  speedtest             - Run an internet speed test"
+        echo "  services              - List running services"
+        echo "  findfile <name>       - Find files by name"
+        echo "  calc <expression>     - Perform math calculations"
+        echo "  lockscreen            - Lock the screen"
+        echo "  update                - Update Finner script"
         ;;
     *)
-        echo "Invalid commandy:). Use 'Finner help' to see all commands."
+        echo "Invalid command. Use 'Finner help' to see all commands."
         ;;
 esac
