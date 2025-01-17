@@ -32,6 +32,7 @@ update_finner() {
     chmod +x /usr/local/bin/Finner
     echo "Finner updated to the latest version!"
 }
+
 file_stat() { stat "$1"; }
 show_syslog() { tail -n 20 /var/log/syslog; }
 check_port() { sudo netstat -tuln | grep ":$1"; }
