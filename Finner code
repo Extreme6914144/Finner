@@ -109,6 +109,6 @@ case "$1" in
         echo "  port <number>         - Check status of a specific port"
         ;;
     *)
-        echo "Invalid command. Use 'Finner help' to see all commands."
+        echo "Invalid commandy:). Use 'Finner help' to see all commands."
         ;;
 esac
