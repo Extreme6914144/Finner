@@ -109,6 +109,48 @@ iot_control() {
     python3 -c "import requests; requests.post('http://iot-device-url/$device_id', data={'action': '$action'})"
 }
 
+search_web() {
+    query="$1"
+    if [[ -z "$query" ]]; then
+        echo "Usage: Finner search <query>"
+        return
+    fi
+    python3 -c "import webbrowser; webbrowser.open('https://www.google.com/search?q=' + '$query')"
+}
+
+download_file() {
+    url="$1"
+    output_file="${2:-downloaded_file}"
+    if [[ -z "$url" ]]; then
+        echo "Usage: Finner download <url> [output_file]"
+        return
+    fi
+    wget -O "$output_file" "$url"
+    echo "File downloaded as $output_file"
+}
+
+compress_files() {
+    archive="$1"
+    shift
+    files="$@"
+    if [[ -z "$archive" || -z "$files" ]]; then
+        echo "Usage: Finner compress <archive_name> <files>..."
+        return
+    fi
+    tar -czvf "$archive" $files
+    echo "Files compressed into $archive"
+}
+
+extract_files() {
+    archive="$1"
+    if [[ -z "$archive" ]]; then
+        echo "Usage: Finner extract <archive_name>"
+        return
+    fi
+    tar -xzvf "$archive"
+    echo "Files extracted from $archive"
+}
+
 # Command handler
 case "$1" in
     chat) ai_chat "${@:2}";;
@@ -120,8 +162,12 @@ case "$1" in
     crypto) crypto_prices "$2";;
     net-scan) network_scan;;
     iot) iot_control "$2" "$3";;
+    search) search_web "$2";;
+    download) download_file "$2" "$3";;
+    compress) compress_files "$2" "${@:3}";;
+    extract) extract_files "$2";;
     help)
-        echo "Finner  Commands:"
+        echo "Finner Commands:"
         echo "  chat <message> - Ask the AI a question"
         echo "  monitor - Monitor system resources in real-time"
         echo "  enhance <image> [output] - Enhance image sharpness"
