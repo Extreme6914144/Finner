@@ -1,186 +1,126 @@
+add it to Finner with other commands current code: 
 #!/bin/bash
 
-# Functions for advanced commands
-ai_chat() {
-    if [[ -z "$1" ]]; then
-        echo "Usage: Finner chat <message>"
-        return
-    fi
-    echo "AI Response: Thinking..."
-    python3 -c "import openai; openai.api_key='YOUR_API_KEY'; response=openai.ChatCompletion.create(model='gpt-4', messages=[{'role': 'user', 'content': '$1'}]); print(response['choices'][0]['message']['content'])"
+# Functions for commands
+file_edit() { nano "$1"; }
+run_command() { sudo "$@"; }
+cleanup_spacer() { sudo apt-get clean && sudo rm -rf /tmp/* && echo "Cleaned up!"; }
+health_check() { echo "CPU Load:"; uptime; echo "Memory Usage:"; free -h; echo "Disk Usage:"; df -h; }
+find_large_files() { find / -type f -size +"$1" 2>/dev/null; }
+list_installed_software() { dpkg --get-selections | grep -v deinstall; }
+view_permissions() { ls -l "$1"; }
+delete_file() { rm -i "$1"; echo "File deleted!"; }
+check_disk_usage() { df -h; }
+process_list() { ps aux; }
+uptime_check() { uptime; }
+cpu_info() { lscpu | grep "Model name"; }
+memory_info() { free -h; }
+quick_note() { echo "$1" >> notes.txt; echo "Note saved: $1"; }
+view_notes() { cat notes.txt; }
+system_reboot() { sudo reboot; }
+create_folder() { mkdir -p "$1" && echo "Folder '$1' created."; }
+delete_folder() { rmdir "$1" && echo "Folder '$1' deleted."; }
+show_time() { date; }
+show_ip() { hostname -I | awk '{print $1}'; }
+ping_test() { ping -c 4 "$1"; }
+backup_file() { cp "$1" "$1.bak" && echo "Backup created: $1.bak"; }
+top_cpu_processes() { ps -eo pid,comm,%cpu --sort=-%cpu | head -n 10; }
+top_mem_processes() { ps -eo pid,comm,%mem --sort=-%mem | head -n 10; }
+kernel_version() { uname -r; }
+update_finner() {
+    echo "Updating Finner..."
+    curl -o /usr/local/bin/Finner https://raw.githubusercontent.com/Extreme6914144/Finner/main/Finner%20code
+    chmod +x /usr/local/bin/Finner
+    echo "Finner updated to the latest version!"
+}
+file_stat() { stat "$1"; }
+show_syslog() { tail -n 20 /var/log/syslog; }
+check_port() { sudo netstat -tuln | grep ":$1"; }
+list_users() { who; }
+fetch_weather() {
+    city="$1"
+    curl -s "wttr.in/$city?format=3" || echo "Could not fetch weather. Check your internet."
+}
+run_speedtest() {
+    curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
+}
+list_services() { systemctl list-units --type=service --state=running; }
+find_file() { find / -name "$1" 2>/dev/null; }
+calculate() { echo "$1" | bc; }
+lock_screen() { gnome-screensaver-command -l || echo "Lock screen command not supported on this system."; }
+show_mounts() { mount | column -t; }
+unmount_drive() { sudo umount "$1" && echo "Drive $1 unmounted."; }
+kill_process() { sudo kill "$1" && echo "Process $1 killed."; }
+change_hostname() { sudo hostnamectl set-hostname "$1" && echo "Hostname changed to $1"; }
+last_boot() { who -b; }
+add_user() { sudo adduser "$1"; }
+delete_user() { sudo deluser "$1"; }
+show_netstat() { netstat -tuln; }
+wifi_scan() { sudo iwlist wlan0 scan | grep 'ESSID'; }
+system_summary() {
+    echo "System Information:"
+    echo "--------------------"
+    echo "Hostname: $(hostname)"
+    echo "IP Address: $(hostname -I | awk '{print $1}')"
+    echo "Uptime: $(uptime -p)"
+    echo "Kernel Version: $(uname -r)"
+    echo "CPU: $(lscpu | grep 'Model name' | awk -F: '{print $2}')"
+    echo "Memory Usage:"
+    free -h
+    echo "Disk Usage:"
+    df -h
 }
 
-monitor_resources() {
-    echo "Monitoring system resources... Press Ctrl+C to stop."
-    while true; do
-        clear
-        echo "CPU Usage:"
-        top -b -n1 | grep "Cpu(s)"
-        echo "Memory Usage:"
-        free -h
-        echo "Disk Usage:"
-        df -h
-        sleep 5
-    done
-}
-
-image_enhance() {
-    input_image="$1"
-    output_image="${2:-enhanced_$input_image}"
-    if [[ -z "$input_image" ]]; then
-        echo "Usage: Finner enhance <input_image> [output_image]"
-        return
-    fi
-    python3 -c "
-from PIL import Image, ImageEnhance
-image = Image.open('$input_image')
-enhancer = ImageEnhance.Sharpness(image)
-enhanced_image = enhancer.enhance(2.0)
-enhanced_image.save('$output_image')
-"
-    echo "Enhanced image saved as $output_image"
-}
-
-translate_text() {
-    text="$1"
-    target_lang="${2:-en}"
-    if [[ -z "$text" ]]; then
-        echo "Usage: Finner translate <text> [target_language]"
-        return
-    fi
-    python3 -c "from googletrans import Translator; translator = Translator(); print(translator.translate('$text', dest='$target_lang').text)"
-}
-
-advanced_backup() {
-    src="$1"
-    dest="${2:-/backup}"
-    if [[ -z "$src" ]]; then
-        echo "Usage: Finner backup-adv <source_directory> [destination_directory]"
-        return
-    fi
-    rsync -av --progress "$src" "$dest"
-    echo "Advanced backup completed to $dest"
-}
-
-face_detect() {
-    image="$1"
-    if [[ -z "$image" ]]; then
-        echo "Usage: Finner face-detect <image>"
-        return
-    fi
-    python3 -c "
-import cv2
-image_path = '$image'
-cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-image = cv2.imread(image_path)
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-for (x, y, w, h) in faces:
-    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0), 2)
-output = 'detected_faces.jpg'
-cv2.imwrite(output, image)
-print(f'Detected faces saved as {output}')
-"
-}
-
-crypto_prices() {
-    if [[ -z "$1" ]]; then
-        echo "Fetching top 5 cryptocurrency prices..."
-        curl -s https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd | jq '.[:5] | .[] | {name: .name, price: .current_price}'
-    else
-        echo "Fetching price for $1..."
-        curl -s https://api.coingecko.com/api/v3/simple/price?ids=$1&vs_currencies=usd | jq
-    fi
-}
-
-network_scan() {
-    echo "Scanning network for devices..."
-    sudo nmap -sP 192.168.1.0/24
-}
-
-iot_control() {
-    device_id="$1"
-    action="$2"
-    if [[ -z "$device_id" || -z "$action" ]]; then
-        echo "Usage: Finner iot <device_id> <action>"
-        return
-    fi
-    echo "Sending command to IoT device $device_id to perform $action..."
-    python3 -c "import requests; requests.post('http://iot-device-url/$device_id', data={'action': '$action'})"
-}
-
-search_web() {
-    query="$1"
-    if [[ -z "$query" ]]; then
-        echo "Usage: Finner search <query>"
-        return
-    fi
-    python3 -c "import webbrowser; webbrowser.open('https://www.google.com/search?q=' + '$query')"
-}
-
-download_file() {
-    url="$1"
-    output_file="${2:-downloaded_file}"
-    if [[ -z "$url" ]]; then
-        echo "Usage: Finner download <url> [output_file]"
-        return
-    fi
-    wget -O "$output_file" "$url"
-    echo "File downloaded as $output_file"
-}
-
-compress_files() {
-    archive="$1"
-    shift
-    files="$@"
-    if [[ -z "$archive" || -z "$files" ]]; then
-        echo "Usage: Finner compress <archive_name> <files>..."
-        return
-    fi
-    tar -czvf "$archive" $files
-    echo "Files compressed into $archive"
-}
-
-extract_files() {
-    archive="$1"
-    if [[ -z "$archive" ]]; then
-        echo "Usage: Finner extract <archive_name>"
-        return
-    fi
-    tar -xzvf "$archive"
-    echo "Files extracted from $archive"
-}
-
-# Command handler
+# Command Handler
 case "$1" in
-    chat) ai_chat "${@:2}";;
-    monitor) monitor_resources;;
-    enhance) image_enhance "$2" "$3";;
-    translate) translate_text "$2" "$3";;
-    backup-adv) advanced_backup "$2" "$3";;
-    face-detect) face_detect "$2";;
-    crypto) crypto_prices "$2";;
-    net-scan) network_scan;;
-    iot) iot_control "$2" "$3";;
-    search) search_web "$2";;
-    download) download_file "$2" "$3";;
-    compress) compress_files "$2" "${@:3}";;
-    extract) extract_files "$2";;
+    f) file_edit "$2";;
+    c) run_command "${@:2}";;
+    clean) cleanup_spacer;;
+    health) health_check;;
+    big) find_large_files "$2";;
+    soft) list_installed_software;;
+    perms) view_permissions "$2";;
+    del) delete_file "$2";;
+    disk) check_disk_usage;;
+    ps) process_list;;
+    uptime) uptime_check;;
+    cpu) cpu_info;;
+    mem) memory_info;;
+    quicknote) quick_note "$2";;
+    notes) view_notes;;
+    reboot) system_reboot;;
+    mkdir) create_folder "$2";;
+    rmdir) delete_folder "$2";;
+    time) show_time;;
+    ip) show_ip;;
+    ping) ping_test "$2";;
+    backup) backup_file "$2";;
+    topcpu) top_cpu_processes;;
+    topmem) top_mem_processes;;
+    kernel) kernel_version;;
+    fstat) file_stat "$2";;
+    syslog) show_syslog;;
+    checkport) check_port "$2";;
+    users) list_users;;
+    weather) fetch_weather "$2";;
+    speedtest) run_speedtest;;
+    services) list_services;;
+    findfile) find_file "$2";;
+    calc) calculate "$2";;
+    lockscreen) lock_screen;;
+    mounts) show_mounts;;
+    unmount) unmount_drive "$2";;
+    kill) kill_process "$2";;
+    hostname) change_hostname "$2";;
+    lastboot) last_boot;;
+    adduser) add_user "$2";;
+    deluser) delete_user "$2";;
+    netstat) show_netstat;;
+    wifi) wifi_scan;;
+    sysinfo) system_summary;;
+    update) update_finner;;
     help)
         echo "Finner Commands:"
-        echo "  chat <message> - Ask the AI a question"
-        echo "  monitor - Monitor system resources in real-time"
-        echo "  enhance <image> [output] - Enhance image sharpness"
-        echo "  translate <text> [language] - Translate text into another language"
-        echo "  backup-adv <source> [destination] - Perform advanced backups with rsync"
-        echo "  face-detect <image> - Detect faces in an image"
-        echo "  crypto [crypto_name] - Get cryptocurrency prices"
-        echo "  net-scan - Scan the network for devices"
-        echo "  iot <device_id> <action> - Control IoT devices"
-        echo "  search <query> - Search the web for the query"
-        echo "  download <url> [output] - Download a file from the internet"
-        echo "  compress <archive> <files>... - Compress files into an archive"
-        echo "  extract <archive> - Extract a compressed archive"
         echo "  f <file>              - Edit or create a file"
         echo "  c <command>           - Run a command with sudo"
         echo "  clean                 - Clean system files"
