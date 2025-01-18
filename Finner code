@@ -1,7 +1,5 @@
 #!/bin/bash
 
-SCRIPT_URL="https://raw.githubusercontent.com/your-username/Finner/main/Finner"
-
 # Functions for commands
 file_edit() { nano "$1"; }
 run_command() { sudo "$@"; }
@@ -28,79 +26,95 @@ backup_file() { cp "$1" "$1.bak" && echo "Backup created: $1.bak"; }
 top_cpu_processes() { ps -eo pid,comm,%cpu --sort=-%cpu | head -n 10; }
 top_mem_processes() { ps -eo pid,comm,%mem --sort=-%mem | head -n 10; }
 kernel_version() { uname -r; }
-generate_password() { tr -dc 'A-Za-z0-9!@#$%^&*()_+~' </dev/urandom | head -c 16; echo; }
-file_size() { du -h "$1"; }
-search_file() { find / -name "$1" 2>/dev/null; }
-compress_folder() { tar -czvf "$1.tar.gz" "$1" && echo "Compressed folder: $1.tar.gz"; }
-decompress_folder() { tar -xzvf "$1" && echo "Decompressed folder: $1"; }
-services_status() { systemctl list-units --type=service; }
-wifi_status() { iwconfig 2>/dev/null | grep -i "ssid\|signal"; }
-open_ports() { sudo lsof -i -P -n | grep LISTEN; }
-dns_lookup() { dig "$1" +short; }
-battery_status() { upower -i $(upower -e | grep BAT) | grep --color=never -E "state|to full|percentage"; }
-kill_process() { sudo kill "$1" && echo "Killed process with PID: $1"; }
-usb_devices() { lsusb; }
-edit_bashrc() { nano ~/.bashrc; }
-process_count() { ps aux | wc -l; }
-clear_logs() { sudo rm -rf /var/log/* && echo "Logs cleared!"; }
-
-# Update function
 update_finner() {
-    echo "Updating Finner to the latest version..."
-    wget -q -O /usr/local/bin/Finner "$SCRIPT_URL" && chmod +x /usr/local/bin/Finner
-    if [ $? -eq 0 ]; then
-        echo "Finner successfully updated to the latest version!"
-    else
-        echo "Failed to update Finner. Please check your internet connection or the script URL."
+    echo "Updating Finner..."
+    curl -o /usr/local/bin/Finner https://raw.githubusercontent.com/Extreme6914144/Finner/main/Finner%20code
+    chmod +x /usr/local/bin/Finner
+    echo "Finner updated to the latest version!"
+}
+file_stat() { stat "$1"; }
+show_syslog() { tail -n 20 /var/log/syslog; }
+check_port() { sudo netstat -tuln | grep ":$1"; }
+list_users() { who; }
+fetch_weather() {
+    city="$1"
+    curl -s "wttr.in/$city?format=3" || echo "Could not fetch weather. Check your internet."
+}
+run_speedtest() {
+    curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
+}
+list_services() { systemctl list-units --type=service --state=running; }
+find_file() { find / -name "$1" 2>/dev/null; }
+calculate() { echo "$1" | bc; }
+lock_screen() { gnome-screensaver-command -l || echo "Lock screen command not supported on this system."; }
+show_mounts() { mount | column -t; }
+unmount_drive() { sudo umount "$1" && echo "Drive $1 unmounted."; }
+kill_process() { sudo kill "$1" && echo "Process $1 killed."; }
+change_hostname() { sudo hostnamectl set-hostname "$1" && echo "Hostname changed to $1"; }
+last_boot() { who -b; }
+add_user() { sudo adduser "$1"; }
+delete_user() { sudo deluser "$1"; }
+show_netstat() { netstat -tuln; }
+wifi_scan() { sudo iwlist wlan0 scan | grep 'ESSID'; }
+system_summary() {
+    echo "System Information:"
+    echo "--------------------"
+    echo "Hostname: $(hostname)"
+    echo "IP Address: $(hostname -I | awk '{print $1}')"
+    echo "Uptime: $(uptime -p)"
+    echo "Kernel Version: $(uname -r)"
+    echo "CPU: $(lscpu | grep 'Model name' | awk -F: '{print $2}')"
+    echo "Memory Usage:"
+    free -h
+    echo "Disk Usage:"
+    df -h
+}
+
+# Minecraft Voice Changer
+minecraft_voice_changer() {
+    input_file="$1"
+    output_file="${2:-output_voice.wav}"
+
+    if [[ -z "$input_file" ]]; then
+        echo "Usage: Finner voice <input_audio_file> [output_audio_file]"
+        return
     fi
+
+    echo "Applying Minecraft-style voice effects to $input_file..."
+    sox "$input_file" "$output_file" pitch -500 stretch 1.2
+    echo "Voice modulation complete. Saved to $output_file"
 }
 
-# Help function
-help_menu() {
-    echo "Finner Command Help:"
-    echo "  f <file>              - Edit or create a file"
-    echo "  c <command>           - Run a command with sudo"
-    echo "  clean                 - Clean system files"
-    echo "  health                - Show system health (CPU, memory, disk)"
-    echo "  big <size>            - Find large files (e.g., '1M' for files >1MB)"
-    echo "  soft                  - List installed software"
-    echo "  perms <file>          - View file permissions"
-    echo "  del <file>            - Delete a file (confirmation required)"
-    echo "  disk                  - Show disk usage"
-    echo "  ps                    - Show running processes"
-    echo "  uptime                - Show system uptime"
-    echo "  cpu                   - Display CPU details"
-    echo "  mem                   - Display memory usage"
-    echo "  quicknote <text>      - Save a quick note"
-    echo "  notes                 - View all saved notes"
-    echo "  reboot                - Reboot the system"
-    echo "  mkdir <folder>        - Create a new folder"
-    echo "  rmdir <folder>        - Delete an empty folder"
-    echo "  time                  - Show current date and time"
-    echo "  ip                    - Show system IP address"
-    echo "  ping <url>            - Ping a website or server"
-    echo "  backup <file>         - Backup a file"
-    echo "  topcpu                - Show top 10 CPU-consuming processes"
-    echo "  topmem                - Show top 10 memory-consuming processes"
-    echo "  kernel                - Show Linux kernel version"
-    echo "  genpass               - Generate a random password"
-    echo "  fsize <file>          - Show the size of a file"
-    echo "  search <name>         - Search for a file by name"
-    echo "  compress <folder>     - Compress a folder into .tar.gz"
-    echo "  decompress <file>     - Decompress a .tar.gz file"
-    echo "  services              - Show the status of all system services"
-    echo "  wifi                  - Show Wi-Fi connection status"
-    echo "  openports             - List open network ports"
-    echo "  dns <domain>          - Perform a DNS lookup"
-    echo "  battery               - Display battery status"
-    echo "  kill <PID>            - Kill a process by its ID"
-    echo "  usb                   - List connected USB devices"
-    echo "  bashrc                - Edit .bashrc file"
-    echo "  proccount             - Count the number of running processes"
-    echo "  clearlogs             - Clear system logs"
+# New Commands
+search_command() {
+    echo "Searching for '$1'..."
+    curl -s "https://www.google.com/search?q=$1" | html2text
 }
 
-# Command Handler
+download_file() {
+    url="$1"
+    output_file="${2:-$(basename "$url")}"
+    echo "Downloading $url..."
+    curl -o "$output_file" "$url"
+    echo "Downloaded to $output_file"
+}
+
+compress_files() {
+    output_archive="$1"
+    shift
+    echo "Compressing files into $output_archive..."
+    tar -czvf "$output_archive" "$@"
+    echo "Files compressed into $output_archive"
+}
+
+extract_archive() {
+    archive_file="$1"
+    echo "Extracting $archive_file..."
+    tar -xzvf "$archive_file"
+    echo "Extraction complete!"
+}
+
+# Command handler
 case "$1" in
     f) file_edit "$2";;
     c) run_command "${@:2}";;
@@ -127,21 +141,76 @@ case "$1" in
     topcpu) top_cpu_processes;;
     topmem) top_mem_processes;;
     kernel) kernel_version;;
-    genpass) generate_password;;
-    fsize) file_size "$2";;
-    search) search_file "$2";;
-    compress) compress_folder "$2";;
-    decompress) decompress_folder "$2";;
-    services) services_status;;
-    wifi) wifi_status;;
-    openports) open_ports;;
-    dns) dns_lookup "$2";;
-    battery) battery_status;;
+    update) update_finner;;
+    fstat) file_stat "$2";;
+    syslog) show_syslog;;
+    checkport) check_port "$2";;
+    users) list_users;;
+    weather) fetch_weather "$2";;
+    speedtest) run_speedtest;;
+    services) list_services;;
+    findfile) find_file "$2";;
+    calc) calculate "$2";;
+    lockscreen) lock_screen;;
+    mounts) show_mounts;;
+    unmount) unmount_drive "$2";;
     kill) kill_process "$2";;
-    usb) usb_devices;;
-    bashrc) edit_bashrc;;
-    proccount) process_count;;
-    clearlogs) clear_logs;;
-    help) help_menu;;
-    *) echo "Invalid command. Use 'Finner help' to see all commands.";;
+    hostname) change_hostname "$2";;
+    lastboot) last_boot;;
+    adduser) add_user "$2";;
+    deluser) delete_user "$2";;
+    netstat) show_netstat;;
+    wifi) wifi_scan;;
+    sysinfo) system_summary;;
+    voice) minecraft_voice_changer "$2" "$3";;
+    search) search_command "$2";;
+    download) download_file "$2" "$3";;
+    compress) compress_files "$2" "${@:3}";;
+    extract) extract_archive "$2";;
+    help)
+        echo "Finner Commands:"
+        echo "  search <query> - Search the web for the query"
+        echo "  download <url> [output] - Download a file from the internet"
+        echo "  compress <archive> <files>... - Compress files into an archive"
+        echo "  extract <archive> - Extract a compressed archive"
+        echo "  f <file>              - Edit or create a file"
+        echo "  c <command>           - Run a command with sudo"
+        echo "  clean                 - Clean system files"
+        echo "  health                - Show system health"
+        echo "  big <size>            - Find large files"
+        echo "  soft                  - List installed software"
+        echo "  perms <file>          - View file permissions"
+        echo "  del <file>            - Delete a file"
+        echo "  disk                  - Show disk usage"
+        echo "  ps                    - Show running processes"
+        echo "  uptime                - Show system uptime"
+        echo "  cpu                   - Display CPU details"
+        echo "  mem                   - Display memory usage"
+        echo "  quicknote <text>      - Save a quick note"
+        echo "  notes                 - View all saved notes"
+        echo "  reboot                - Reboot the system"
+        echo "  mkdir <folder>        - Create a new folder"
+        echo "  rmdir <folder>        - Delete an empty folder"
+        echo "  time                  - Show current date and time"
+        echo "  ip                    - Show system IP address"
+        echo "  ping <url>            - Ping a website or server"
+        echo "  backup <file>         - Backup a file"
+        echo "  topcpu                - Show top 10 CPU-consuming processes"
+        echo "  topmem                - Show top 10 memory-consuming processes"
+        echo "  kernel                - Show Linux kernel version"
+        echo "  mounts                - Show mounted drives"
+        echo "  unmount <drive>       - Unmount a drive"
+        echo "  kill <pid>            - Kill a process"
+        echo "  hostname <name>       - Change system hostname"
+        echo "  lastboot              - Show last boot time"
+        echo "  adduser <username>    - Add a new user"
+        echo "  deluser <username>    - Delete an existing user"
+        echo "  netstat               - Show network connections"
+        echo "  wifi                  - Show available Wi-Fi networks"
+        echo "  sysinfo               - Display system summary"
+        echo "  update                - Update Finner to the latest version"
+        ;;
+    *)
+        echo "Invalid command. Use 'Finner help' to see all commands."
+        ;;
 esac
