@@ -1,15 +1,6 @@
 #!/bin/bash
 
 # Functions for advanced commands
-ai_chat() {
-    if [[ -z "$1" ]]; then
-        echo "Usage: Finner chat <message>"
-        return
-    fi
-    echo "AI Response: Thinking..."
-    python3 -c "import openai; openai.api_key='YOUR_API_KEY'; response=openai.ChatCompletion.create(model='gpt-4', messages=[{'role': 'user', 'content': '$1'}]); print(response['choices'][0]['message']['content'])"
-}
-
 monitor_resources() {
     echo "Monitoring system resources... Press Ctrl+C to stop."
     while true; do
@@ -153,7 +144,6 @@ extract_files() {
 
 # Command handler
 case "$1" in
-    chat) ai_chat "${@:2}";;
     monitor) monitor_resources;;
     enhance) image_enhance "$2" "$3";;
     translate) translate_text "$2" "$3";;
@@ -168,7 +158,6 @@ case "$1" in
     extract) extract_files "$2";;
     help)
         echo "Finner Commands:"
-        echo "  chat <message> - Ask the AI a question"
         echo "  monitor - Monitor system resources in real-time"
         echo "  enhance <image> [output] - Enhance image sharpness"
         echo "  translate <text> [language] - Translate text into another language"
