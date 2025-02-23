@@ -156,6 +156,7 @@ case "$1" in
         echo "  wifi                  - Show available Wi-Fi networks"
         echo "  sysinfo               - Display system summary"
         echo "  update                - Update Finner to the latest version"
+        echo " Need more help? contact me at Extreme6914144@gmail.com"
         ;;
     *)
         echo "Invalid command. Use 'Finner help' to see all commands."
