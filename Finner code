@@ -28,8 +28,8 @@ top_mem_processes() { ps -eo pid,comm,%mem --sort=-%mem | head -n 10; }
 kernel_version() { uname -r; }
 update_finner() {
     echo "Updating Finner..."
-    curl -o $HOME/Finner https://raw.githubusercontent.com/Extreme6914144/Finner/main/Finner%20code
-    chmod +x $HOME/Finner
+    curl -o $HOME/Finner/finner.sh https://raw.githubusercontent.com/Extreme6914144/Finner/main/Finner%20code
+    chmod +x $HOME/Finner/finner.sh
     echo "Finner updated to the latest version!"
 }
 file_stat() { stat "$1"; }
